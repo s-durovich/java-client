@@ -6,14 +6,18 @@ See License.txt in the project root for license information.
 
 package microsoft.aspnet.signalr.client.transport;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import com.google.gson.Gson;
 
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.exceptions.InvalidDataException;
 import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ServerHandshake;
@@ -64,16 +68,19 @@ public class WebsocketTransport extends HttpClientTransport {
         final String messageId = connection.getMessageId() != null ? connection.getMessageId() : "";
         final String groupsToken = connection.getGroupsToken() != null ? connection.getGroupsToken() : "";
         final String connectionData = connection.getConnectionData() != null ? connection.getConnectionData() : "";
-
-
+        
+        boolean isSsl = false;
         String url = null;
         try {
-            url = connection.getUrl() + "signalr/" + connectionString + '?'
+            url = connection.getUrl() + connectionString + '?'
                     + "connectionData=" + URLEncoder.encode(URLEncoder.encode(connectionData, "UTF-8"), "UTF-8")
                     + "&connectionToken=" + URLEncoder.encode(URLEncoder.encode(connectionToken, "UTF-8"), "UTF-8")
                     + "&groupsToken=" + URLEncoder.encode(groupsToken, "UTF-8")
                     + "&messageId=" + URLEncoder.encode(messageId, "UTF-8")
                     + "&transport=" + URLEncoder.encode(transport, "UTF-8");
+            if(connection.getQueryString() != null) {
+            	url += "&" + connection.getQueryString();
+            }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -84,6 +91,7 @@ public class WebsocketTransport extends HttpClientTransport {
         try {
             if (url.startsWith("https://")) {
                 uri = new URI(url.replace("https://", "wss://"));
+                isSsl = true;
             } else if (url.startsWith("http://")) {
                 uri = new URI(url.replace("http://", "ws://"));
             } else {
@@ -95,7 +103,7 @@ public class WebsocketTransport extends HttpClientTransport {
             return mConnectionFuture;
         }
 
-        mWebSocketClient = new WebSocketClient(uri) {
+        mWebSocketClient = new WebSocketClient(uri, new Draft_17(), connection.getHeaders(), 0) {
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 mConnectionFuture.setResult(null);
@@ -148,6 +156,16 @@ public class WebsocketTransport extends HttpClientTransport {
                 }
             }
         };
+        
+        if(isSsl){
+        	SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            try {
+                mWebSocketClient.setSocket(factory.createSocket());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+        
         mWebSocketClient.connect();
 
         connection.closed(new Runnable() {
