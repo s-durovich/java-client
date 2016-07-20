@@ -114,6 +114,7 @@ public class WebsocketTransport extends HttpClientTransport {
             @Override
             public void onError(Exception e) {
                 mWebSocketClient.close();
+                mConnectionFuture.triggerError(e);
             }
 
             @Override
