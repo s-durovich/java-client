@@ -76,7 +76,7 @@ public class HubConnection extends Connection {
 
         log("Processing message", LogLevel.Information);
         ConnectionState state = getState();
-        if (state == ConnectionState.Connected || (getTransportClass().equals(LongPollingTransport.class) && (state == ConnectionState.Connected || state == ConnectionState.Reconnecting))) {
+        if (state == ConnectionState.Connected || (getTransport() instanceof LongPollingTransport && (state == ConnectionState.Connected || state == ConnectionState.Reconnecting))) {
             if (message.isJsonObject() && message.getAsJsonObject().has("I")) {
                 log("Getting HubResult from message", LogLevel.Verbose);
                 HubResult result = mGson.fromJson(message, HubResult.class);

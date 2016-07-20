@@ -20,10 +20,8 @@ import microsoft.aspnet.signalr.client.transport.AutomaticTransport;
 import microsoft.aspnet.signalr.client.transport.ClientTransport;
 import microsoft.aspnet.signalr.client.transport.ConnectionType;
 import microsoft.aspnet.signalr.client.transport.DataResultCallback;
-import microsoft.aspnet.signalr.client.transport.HttpClientTransport;
 import microsoft.aspnet.signalr.client.transport.NegotiationResponse;
 import microsoft.aspnet.signalr.client.transport.TransportHelper;
-import microsoft.aspnet.signalr.client.Logger;
 
 /**
  * Represents a basic SingalR connection
@@ -831,8 +829,7 @@ public class Connection implements ConnectionBase {
         }
     }
 
-    public Class getTransportClass() {
-        if(mTransport == null) return null;
-        return mTransport.getClass();
+    public ClientTransport getTransport() {
+        return mTransport;
     }
 }
